@@ -8,9 +8,27 @@ on:
       - "backend/**"
 
 jobs:
-  build-and-push-frontend:
-    if: ${{ github.event.head_commit.message != 'update-backend' }}
+  determine-changes:
     runs-on: ubuntu-latest
+    outputs:
+      frontend_changed: ${{ steps.check.outputs.frontend }}
+      backend_changed: ${{ steps.check.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check for frontend changes
+        id: check
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            backend:
+              - 'backend/**'
+
+  build-and-push-frontend:
+    if: ${{ needs.determine-changes.outputs.frontend_changed == 'true' }}
+    runs-on: ubuntu-latest
+    needs: determine-changes
     steps:
       - uses: actions/checkout@v2
       - name: Login to DockerHub
@@ -26,8 +44,9 @@ jobs:
           tags: dhairya07/quash-max-frontend:testV1
 
   build-and-push-backend:
-    if: ${{ github.event.head_commit.message != 'update-frontend' }}
+    if: ${{ needs.determine-changes.outputs.backend_changed == 'true' }}
     runs-on: ubuntu-latest
+    needs: determine-changes
     steps:
       - uses: actions/checkout@v2
       - name: Login to DockerHub
