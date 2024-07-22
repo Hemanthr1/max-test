@@ -24,6 +24,10 @@ jobs:
               - 'frontend/**'
             backend:
               - 'backend/**'
+      - name: Output frontend and backend changes
+        run: |
+          echo "Frontend changed: ${{ steps.check.outputs.frontend }}"
+          echo "Backend changed: ${{ steps.check.outputs.backend }}"
 
   get-frontend-tags:
     runs-on: ubuntu-latest
@@ -66,6 +70,8 @@ jobs:
     needs: [determine-changes, get-frontend-tags]
     if: ${{ needs.determine-changes.outputs.frontend_changed == 'true' }}
     steps:
+      - name: Output frontend change confirmation
+        run: echo "Frontend change confirmed: ${{ needs.determine-changes.outputs.frontend_changed }}"
       - uses: actions/checkout@v2
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -92,6 +98,8 @@ jobs:
     needs: [determine-changes, get-backend-tags]
     if: ${{ needs.determine-changes.outputs.backend_changed == 'true' }}
     steps:
+      - name: Output backend change confirmation
+        run: echo "Backend change confirmed: ${{ needs.determine-changes.outputs.backend_changed }}"
       - uses: actions/checkout@v2
       - name: Set up JDK 21
         uses: actions/setup-java@v3
