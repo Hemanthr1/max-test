@@ -63,6 +63,7 @@ public class ApplicationController {
         try {
             User user = (User) authentication.getPrincipal();
             applicationService.deleteApp(appId, user);
+            System.out.println("Print statement added");
             return ResponseEntity.ok(new ResponseDTO(true, "App and associated data deleted successfully", null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
