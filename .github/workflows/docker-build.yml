@@ -25,28 +25,72 @@ jobs:
             backend:
               - 'backend/**'
 
-  build-and-push-frontend:
-    if: ${{ needs.determine-changes.outputs.frontend_changed == 'true' }}
+  get-frontend-tags:
     runs-on: ubuntu-latest
-    needs: determine-changes
+    if: ${{ needs.determine-changes.outputs.frontend_changed == 'true' }}
+    outputs:
+      new_version: ${{ steps.set-new-version.outputs.new_version }}
+    steps:
+      - name: Get current tags from DockerHub for frontend
+        id: get-tags
+        run: |
+          current_tags=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKERHUB_PASSWORD }}" "https://hub.docker.com/v2/repositories/dhairya07/quash-max-frontend/tags?page_size=100" | jq -r '.results[].name')
+          latest_version=$(echo "$current_tags" | grep -Eo 'v[0-9]+' | sort -V | tail -1)
+          if [ -z "$latest_version" ]; then
+            new_version=v1
+          else
+            new_version=v$(( ${latest_version:1} + 1 ))
+          fi
+          echo "::set-output name=new_version::$new_version"
+
+  get-backend-tags:
+    runs-on: ubuntu-latest
+    if: ${{ needs.determine-changes.outputs.backend_changed == 'true' }}
+    outputs:
+      new_version: ${{ steps.set-new-version.outputs.new_version }}
+    steps:
+      - name: Get current tags from DockerHub for backend
+        id: get-tags
+        run: |
+          current_tags=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKERHUB_PASSWORD }}" "https://hub.docker.com/v2/repositories/dhairya07/quash-max-backend/tags?page_size=100" | jq -r '.results[].name')
+          latest_version=$(echo "$current_tags" | grep -Eo 'v[0-9]+' | sort -V | tail -1)
+          if [ -z "$latest_version" ]; then
+            new_version=v1
+          else
+            new_version=v$(( ${latest_version:1} + 1 ))
+          fi
+          echo "::set-output name=new_version::$new_version"
+
+  build-and-push-frontend:
+    runs-on: ubuntu-latest
+    needs: [determine-changes, get-frontend-tags]
+    if: ${{ needs.determine-changes.outputs.frontend_changed == 'true' }}
     steps:
       - uses: actions/checkout@v2
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Pull the latest image
+        run: docker pull dhairya07/quash-max-frontend:latest || true
+      - name: Tag the previous latest image
+        run: |
+          if docker inspect dhairya07/quash-max-frontend:latest; then
+            docker tag dhairya07/quash-max-frontend:latest dhairya07/quash-max-frontend:${{ needs.get-frontend-tags.outputs.new_version }}
+            docker push dhairya07/quash-max-frontend:${{ needs.get-frontend-tags.outputs.new_version }}
+          fi
       - name: Build and push frontend
         uses: docker/build-push-action@v2
         with:
           context: ./frontend
           push: true
-          tags: dhairya07/quash-max-frontend:testV1
+          tags: dhairya07/quash-max-frontend:latest
 
   build-and-push-backend:
-    if: ${{ needs.determine-changes.outputs.backend_changed == 'true' }}
     runs-on: ubuntu-latest
-    needs: determine-changes
+    needs: [determine-changes, get-backend-tags]
+    if: ${{ needs.determine-changes.outputs.backend_changed == 'true' }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK 21
@@ -54,7 +98,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'oracle'
-
       - name: Build with Maven
         run: mvn clean package
         working-directory: ./backend
@@ -62,10 +105,18 @@ jobs:
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Pull the latest image
+        run: docker pull dhairya07/quash-max-backend:latest || true
+      - name: Tag the previous latest image
+        run: |
+          if docker inspect dhairya07/quash-max-backend:latest; then
+            docker tag dhairya07/quash-max-backend:latest dhairya07/quash-max-backend:${{ needs.get-backend-tags.outputs.new_version }}
+            docker push dhairya07/quash-max-backend:${{ needs.get-backend-tags.outputs.new_version }}
+          fi
       - name: Build and push backend
         uses: docker/build-push-action@v2
         with:
           context: ./backend
           push: true
-          tags: dhairya07/quash-max-backend:testV1
+          tags: dhairya07/quash-max-backend:latest
