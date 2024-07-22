@@ -73,6 +73,7 @@ export default function Dashboard({
   integration: boolean;
   integrationsDone: string[];
 }) {
+  console.log('console added')
   const [open, setOpen] = useState(false);
   const [bugList, setBugList] = useState<Report[]>([]);
   const [bugListOriginal, setBugListOriginal] = useState<Report[]>([]);
