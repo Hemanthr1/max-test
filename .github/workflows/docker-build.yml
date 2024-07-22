@@ -9,7 +9,6 @@ on:
 
 jobs:
   build-and-push-frontend:
-    if: contains(github.event.head_commit.message, 'frontend')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -26,7 +25,6 @@ jobs:
           tags: dhairya07/quash-max-frontend:testV1
 
   build-and-push-backend:
-    if: contains(github.event.head_commit.message, 'backend')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
