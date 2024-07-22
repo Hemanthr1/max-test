@@ -60,6 +60,8 @@ const IntegrationBanner = React.lazy(
  * The component fetches data, filters, exports, and displays bug reports based on user interactions.
  */
 
+
+
 export default function Dashboard({
   orgData,
   inviteMember,
@@ -71,6 +73,7 @@ export default function Dashboard({
   integration: boolean;
   integrationsDone: string[];
 }) {
+  console.log('console added')
   const [open, setOpen] = useState(false);
   const [bugList, setBugList] = useState<Report[]>([]);
   const [bugListOriginal, setBugListOriginal] = useState<Report[]>([]);
