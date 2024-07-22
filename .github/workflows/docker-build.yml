@@ -1,14 +1,16 @@
 name: Docker Build and Push
+
 on:
   push:
     branches: [main]
     paths:
       - "frontend/**"
       - "backend/**"
+
 jobs:
   build-and-push-frontend:
     runs-on: ubuntu-latest
-    if: github.event.head_commit.modified[0] == 'frontend/'
+    if: contains(github.event.head_commit.modified, 'frontend/')
     steps:
       - uses: actions/checkout@v2
       - name: Login to DockerHub
@@ -22,9 +24,10 @@ jobs:
           context: ./frontend
           push: true
           tags: dhairya07/quash-max-frontend:testV1
+
   build-and-push-backend:
     runs-on: ubuntu-latest
-    if: github.event.head_commit.modified[0] == 'backend/'
+    if: contains(github.event.head_commit.modified, 'backend/')
     steps:
       - uses: actions/checkout@v2
       - name: Login to DockerHub
