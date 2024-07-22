@@ -115,16 +115,4 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Pull the latest image
-        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/quash-max-backend:latest || true
-      - name: Tag the previous latest image
-        run: |
-          if docker inspect ${{ secrets.DOCKERHUB_USERNAME }}/quash-max-backend:latest; then
-            docker tag ${{ secrets.DOCKERHUB_USERNAME }}/quash-max-backend:latest ${{ secrets.DOCKERHUB_USERNAME }}/quash-max-backend:${{ needs.get-backend-tags.outputs.new_version }}
-            docker push ${{ secrets.DOCKERHUB_USERNAME }}/quash-max-backend:${{ needs.get-backend-tags.outputs.new_version }}
-          fi
-      - name: Build and push backend
-        uses: docker/build-push-action@v2
-        with:
-          context: ./backend
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/quash-max-backend:latest
+        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/quash-max-backend:latest |
